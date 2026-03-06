@@ -1,5 +1,4 @@
 venv/
-.wwebjs_auth/
 node_modules/
 .env
 __pycache__/

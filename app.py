@@ -3,11 +3,19 @@ import os
 import requests
 from werkzeug.utils import secure_filename
 import base64
+from flask_mail import Mail, Message
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
 
-# WhatsApp server URL
-WHATSAPP_SERVER_URL = os.getenv('WHATSAPP_SERVER_URL', 'http://localhost:3001')
+# Email configuration
+app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
+app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', True)
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@womensday.com')
+
+mail = Mail(app)
 
 # Google Apps Script URL
 GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbytB-Z0w0-LikTqGOYFIM-oKkdAMtEHxMGc1YK1tCxGo9AxwPSym9yb1Z4o2GXn921d/exec"
@@ -58,19 +66,32 @@ def submit_registration():
         if response.status_code != 200:
             return jsonify({'success': False, 'error': 'Failed to submit to Google Sheets'}), 400
         
-        # Send WhatsApp confirmation
+        # Send email confirmation
         try:
-            whatsapp_response = requests.post(
-                f'{WHATSAPP_SERVER_URL}/send-message',
-                json={
-                    'phoneNumber': f'+91{phone_number}',
-                    'message': f"Hi {participant_name}, Thank you for registering for Women's Day Event! We're excited to have you participate. See you soon!"
-                },
-                timeout=10
+            msg = Message(
+                subject='Women\'s Day Event Registration Confirmation',
+                recipients=[f'{phone_number}@example.com'],  # Replace with actual email if available
+                html=f"""
+                <h2>Registration Confirmed!</h2>
+                <p>Hi {participant_name},</p>
+                <p>Thank you for registering for Women's Day Event!</p>
+                <p><strong>Registration Details:</strong></p>
+                <ul>
+                    <li>Name: {participant_name}</li>
+                    <li>Age: {age}</li>
+                    <li>Phone: +91{phone_number}</li>
+                    <li>Address: {address}</li>
+                    <li>Group 1: {group1 or 'Not selected'}</li>
+                    <li>Group 2: {group2 or 'Not selected'}</li>
+                    <li>Group 3: {group3 or 'Not selected'}</li>
+                </ul>
+                <p>We're excited to have you participate. See you soon!</p>
+                """
             )
-            print(f'WhatsApp response: {whatsapp_response.status_code}')
-        except Exception as whatsapp_error:
-            print(f'WhatsApp error (non-blocking): {str(whatsapp_error)}')
+            mail.send(msg)
+            print('Email sent successfully')
+        except Exception as email_error:
+            print(f'Email error (non-blocking): {str(email_error)}')
         
         return jsonify({'success': True, 'message': 'Registration submitted successfully'})
     
