@@ -1,0 +1,19 @@
+{
+  "name": "whatsapp-server",
+  "version": "1.0.0",
+  "description": "WhatsApp message sender using whatsapp-web.js",
+  "main": "whatsapp-server.js",
+  "scripts": {
+    "start": "node whatsapp-server.js",
+    "dev": "nodemon whatsapp-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "whatsapp-web.js": "^1.25.0",
+    "qrcode-terminal": "^0.12.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}
