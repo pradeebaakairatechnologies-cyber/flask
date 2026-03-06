@@ -4,8 +4,10 @@ import requests
 from werkzeug.utils import secure_filename
 import base64
 from flask_mail import Mail, Message
+import traceback
 
 app = Flask(__name__, static_folder='static', static_url_path='/static')
+app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max file size
 
 # Email configuration
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -28,25 +30,37 @@ def index():
 @app.route('/submit-registration', methods=['POST'])
 def submit_registration():
     try:
+        print('Starting registration submission...')
+        
         # Get form data
-        participant_email = request.form.get('email')
-        participant_name = request.form.get('participantName')
-        age = request.form.get('age')
-        phone_number = request.form.get('phoneNumber')
-        address = request.form.get('address')
-        group1 = request.form.get('group1', '')
-        group2 = request.form.get('group2', '')
-        group3 = request.form.get('group3', '')
+        participant_email = request.form.get('email', '').strip()
+        participant_name = request.form.get('participantName', '').strip()
+        age = request.form.get('age', '').strip()
+        phone_number = request.form.get('phoneNumber', '').strip()
+        address = request.form.get('address', '').strip()
+        group1 = request.form.get('group1', '').strip()
+        group2 = request.form.get('group2', '').strip()
+        group3 = request.form.get('group3', '').strip()
+        
+        print(f'Form data received: {participant_name}, {participant_email}')
+        
+        # Validate required fields
+        if not all([participant_email, participant_name, age, phone_number, address]):
+            return jsonify({'success': False, 'error': 'Missing required fields'}), 400
         
         # Get file
         file = request.files.get('paymentScreenshot')
-        
-        if not file:
+        if not file or file.filename == '':
             return jsonify({'success': False, 'error': 'Payment screenshot required'}), 400
+        
+        print(f'File received: {file.filename}, size: {len(file.read())} bytes')
+        file.seek(0)  # Reset file pointer
         
         # Read file and convert to base64
         file_content = file.read()
         base64_file = base64.b64encode(file_content).decode('utf-8')
+        
+        print('Converting to base64...')
         
         # Prepare data for Google Sheets
         form_data = {
@@ -62,8 +76,10 @@ def submit_registration():
             'mimeType': file.mimetype
         }
         
+        print('Sending to Google Sheets...')
         # Send to Google Sheets
         response = requests.post(GOOGLE_SCRIPT_URL, data=form_data, timeout=30)
+        print(f'Google Sheets response: {response.status_code}')
         
         if response.status_code != 200:
             return jsonify({'success': False, 'error': 'Failed to submit to Google Sheets'}), 400
@@ -102,5 +118,6 @@ def submit_registration():
     
     except Exception as e:
         print(f'Registration error: {str(e)}')
-        return jsonify({'success': False, 'error': str(e)}), 400
+        print(traceback.format_exc())
+        return jsonify({'success': False, 'error': str(e)}), 500
 
