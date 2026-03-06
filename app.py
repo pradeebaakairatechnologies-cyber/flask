@@ -28,6 +28,7 @@ def index():
 def submit_registration():
     try:
         # Get form data
+        participant_email = request.form.get('email')
         participant_name = request.form.get('participantName')
         age = request.form.get('age')
         phone_number = request.form.get('phoneNumber')
@@ -70,7 +71,7 @@ def submit_registration():
         try:
             msg = Message(
                 subject='Women\'s Day Event Registration Confirmation',
-                recipients=[f'{phone_number}@example.com'],  # Replace with actual email if available
+                recipients=[participant_email],
                 html=f"""
                 <h2>Registration Confirmed!</h2>
                 <p>Hi {participant_name},</p>

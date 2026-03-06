@@ -198,11 +198,6 @@
             outline: none;
         }
         
-        .enroll-form input:focus, .enroll-form textarea:focus {
-            border-color: #ff8ecc;
-            box-shadow: 0 0 0 2px rgba(255, 142, 204, 0.3);
-        }
-        
         .competition-group {
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(201, 127, 242, 0.3);
@@ -330,7 +325,7 @@
                 
                 <h2 class="modal-title">Event Registration</h2>
 
-                <form class="enroll-form" onsubmit="handleSubmit(event)">
+                <form class="enroll-form" onsubmit="handleSubmit(event)" enctype="multipart/form-data">
                     <div class="form-group">
                         <label>Participant Name</label>
                         <input type="text" name="participantName" placeholder="Enter your full name" required>
@@ -349,21 +344,26 @@
                     </div>
 
                     <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" name="email" placeholder="your.email@example.com" required>
+                    </div>
+
+                    <div class="form-group">
                         <label>Address</label>
                         <textarea rows="2" name="address" placeholder="Enter your complete address" required></textarea>
                     </div>
 
                     <h3 style="margin: 1rem 0 0.5rem; color: #fff; font-size: 1.4rem;">Competition Selection</h3>
-                    <p style="margin: 0 0 1rem; color: #fff; font-size: 0.95rem;">Please choose exactly one activity from each group.</p>
+                    <p style="margin: 0 0 1rem; color: #fff; font-size: 0.95rem;">Please choose activities (optional).</p>
 
                     <div class="competition-group">
                         <h4>Group 1</h4>
                         <label class="radio-label">
-                            <input type="radio" name="group1" value="Cooking" required>
+                            <input type="radio" name="group1" value="Cooking">
                             <span>Cooking</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="group1" value="Adzap" required>
+                            <input type="radio" name="group1" value="Adzap">
                             <span>Adzap</span>
                         </label>
                     </div>
@@ -371,11 +371,11 @@
                     <div class="competition-group">
                         <h4>Group 2</h4>
                         <label class="radio-label">
-                            <input type="radio" name="group2" value="Dance" required>
+                            <input type="radio" name="group2" value="Dance">
                             <span>Dance</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="group2" value="Bouquet Making" required>
+                            <input type="radio" name="group2" value="Bouquet Making">
                             <span>Bouquet Making</span>
                         </label>
                     </div>
@@ -383,23 +383,28 @@
                     <div class="competition-group">
                         <h4>Group 3</h4>
                         <label class="radio-label">
-                            <input type="radio" name="group3" value="Rangoli" required>
+                            <input type="radio" name="group3" value="Rangoli">
                             <span>Rangoli</span>
                         </label>
                         <label class="radio-label">
-                            <input type="radio" name="group3" value="Fashion Show" required>
+                            <input type="radio" name="group3" value="Fashion Show">
                             <span>Fashion Show</span>
                         </label>
                     </div>
 
                     <div class="form-group">
                         <label>Payment Amount</label>
-                        <input type="text" value="200" readonly style="background-color: rgba(0, 0, 0, 0.25); cursor: not-allowed;">
+                        <input type="text" value="150" readonly style="background-color: rgba(0, 0, 0, 0.25); cursor: not-allowed;">
                     </div>
 
                     <div class="payment-options-container">
                         <p style="color: #fff; margin-bottom: 1rem;">Scan to Pay via any UPI App</p>
                         <img src="/static/images/phone.webp" alt="Payment QR Code" class="qr-code-img">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Upload Payment Screenshot</label>
+                        <input type="file" name="paymentScreenshot" accept="image/*" required>
                     </div>
 
                     <button type="submit" class="submit-btn" id="submitBtn">Submit Registration</button>
@@ -434,20 +439,14 @@
             submitBtn.disabled = true;
             submitBtn.textContent = 'Submitting...';
 
-            const phoneNumber = '+91' + form.phoneNumber.value;
-            const participantName = form.participantName.value;
-            const message = `Hi ${participantName}, Thank you for registering for Women's Day Event! We're excited to have you participate. See you soon!`;
-
             try {
-                const response = await fetch('/send-whatsapp', {
+                const formData = new FormData(form);
+                const phoneNumber = formData.get('phoneNumber');
+                const participantName = formData.get('participantName');
+                
+                const response = await fetch('/submit-registration', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        to_number: phoneNumber,
-                        message: message
-                    })
+                    body: formData
                 });
 
                 const data = await response.json();
