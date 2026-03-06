@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WhatsApp Message Sender</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #25D366;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #128C7E;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Send WhatsApp Message</h1>
+    
+    <input type="text" id="phoneNumber" placeholder="Enter phone number (e.g., +1234567890)">
+    <textarea id="messageText" rows="4" placeholder="Enter your message"></textarea>
+    <button onclick="sendMessage()">Send WhatsApp Message</button>
+    
+    <div id="result"></div>
+
+    <script>
+        async function sendMessage() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const messageText = document.getElementById('messageText').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!phoneNumber || !messageText) {
+                resultDiv.innerHTML = '<div class="message error">Please fill in all fields</div>';
+                return;
+            }
+            
+            try {
+                const response = await fetch('/send-whatsapp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        to_number: phoneNumber,
+                        message: messageText
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = '<div class="message success">Message sent successfully!</div>';
+                } else {
+                    resultDiv.innerHTML = `<div class="message error">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="message error">Error: ${error.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
