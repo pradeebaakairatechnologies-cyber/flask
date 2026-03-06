@@ -10,10 +10,11 @@ app = Flask(__name__, static_folder='static', static_url_path='/static')
 # Email configuration
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
 app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
-app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', True)
-app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
-app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['MAIL_USE_TLS'] = os.getenv('MAIL_USE_TLS', 'True') == 'True'
+app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME', '')
+app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD', '')
 app.config['MAIL_DEFAULT_SENDER'] = os.getenv('MAIL_DEFAULT_SENDER', 'noreply@womensday.com')
+app.config['MAIL_SUPPRESS_SEND'] = not (app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD'])
 
 mail = Mail(app)
 
@@ -69,28 +70,31 @@ def submit_registration():
         
         # Send email confirmation
         try:
-            msg = Message(
-                subject='Women\'s Day Event Registration Confirmation',
-                recipients=[participant_email],
-                html=f"""
-                <h2>Registration Confirmed!</h2>
-                <p>Hi {participant_name},</p>
-                <p>Thank you for registering for Women's Day Event!</p>
-                <p><strong>Registration Details:</strong></p>
-                <ul>
-                    <li>Name: {participant_name}</li>
-                    <li>Age: {age}</li>
-                    <li>Phone: +91{phone_number}</li>
-                    <li>Address: {address}</li>
-                    <li>Group 1: {group1 or 'Not selected'}</li>
-                    <li>Group 2: {group2 or 'Not selected'}</li>
-                    <li>Group 3: {group3 or 'Not selected'}</li>
-                </ul>
-                <p>We're excited to have you participate. See you soon!</p>
-                """
-            )
-            mail.send(msg)
-            print('Email sent successfully')
+            if app.config['MAIL_USERNAME'] and app.config['MAIL_PASSWORD']:
+                msg = Message(
+                    subject='Women\'s Day Event Registration Confirmation',
+                    recipients=[participant_email],
+                    html=f"""
+                    <h2>Registration Confirmed!</h2>
+                    <p>Hi {participant_name},</p>
+                    <p>Thank you for registering for Women's Day Event!</p>
+                    <p><strong>Registration Details:</strong></p>
+                    <ul>
+                        <li>Name: {participant_name}</li>
+                        <li>Age: {age}</li>
+                        <li>Phone: +91{phone_number}</li>
+                        <li>Address: {address}</li>
+                        <li>Group 1: {group1 or 'Not selected'}</li>
+                        <li>Group 2: {group2 or 'Not selected'}</li>
+                        <li>Group 3: {group3 or 'Not selected'}</li>
+                    </ul>
+                    <p>We're excited to have you participate. See you soon!</p>
+                    """
+                )
+                mail.send(msg)
+                print('Email sent successfully')
+            else:
+                print('Email credentials not configured')
         except Exception as email_error:
             print(f'Email error (non-blocking): {str(email_error)}')
         
